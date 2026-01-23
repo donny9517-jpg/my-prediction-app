@@ -1,16 +1,16 @@
 import streamlit as st
 import pandas as pd
 
-# 1. 基礎設定
-st.set_page_config(page_title="PRO 數據終端", layout="wide")
+# 1. 網頁基礎設定
+st.set_page_config(page_title="PRO 數據分析預測終端", layout="wide")
 
 st.title("📊 PRO 數據分析預測終端")
 
-# 初始化數據
+# 初始化數據（存儲於會話中）
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# --- 側邊欄 ---
+# --- 側邊欄：輸入與命中率 ---
 with st.sidebar:
     st.header("⌨️ 數據輸入")
     val = st.number_input("最新開出數字", 2, 12, 7)
@@ -19,30 +19,46 @@ with st.sidebar:
     
     st.divider()
     
+    # 計算命中率 (近10手落在6,7,8)
     if len(st.session_state.history) >= 10:
         win_c = sum(1 for x in st.session_state.history[-10:] if x in [6, 7, 8])
         st.write(f"📈 近 10 手中軸命中率: **{win_c * 10}%**")
     
+    st.divider()
     if st.button("🗑️ 清空數據", use_container_width=True):
         st.session_state.history = []
         st.rerun()
 
-# --- 核心邏輯 ---
-def analyze(history):
+# --- 核心邏輯函數 ---
+def analyze_data(history):
     if not history: return None
     last = history[-1]
     results = []
     for e in range(2, 13):
+        # 基礎機率分
         prob_map = {7:6, 6:5, 8:5, 5:4, 9:4, 4:3, 10:3, 3:2, 11:2, 2:1, 12:1}
         score = (prob_map[e] / 36) * 100
+        # 矩陣連動
         if last in [6,7,8] and e in [6,7,8]: score += 18
         if last in [4,8,10] and e in [4,8,10]: score += 14
+        # 鄰居與過熱修正
         if abs(last - e) == 1: score += 10
         if history[-10:].count(e) >= 3: score -= 22
         results.append({"數字": e, "評分": round(score, 2)})
     return pd.DataFrame(results).sort_values("評分", ascending=False)
 
-# --- 主畫面 (修正顯示問題) ---
+# --- 主畫面顯示 ---
 if st.session_state.history:
-    df_res = analyze(st.session_state.history)
-    best_num = df_
+    df_res = analyze_data(st.session_state.history) # 修正變數名
+    best_num = df_res.iloc[0]['數字']
+    conf_score = df_res.iloc[0]['評分']
+    
+    # 頂部三大看板 - 使用標準組件確保一定睇到
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.info("🎯 **重點布局**")
+        st.header(f"{int(best_num)}")
+        
+    with col2:
+        st.success("💰 **注
