@@ -81,8 +81,11 @@ if st.session_state.history:
     # 能量分佈圖
     st.bar_chart(df.set_index("數字")["評分"])
     
-    # 歷史紀錄
-    st.write("### 📜 最近 10 手紀錄")
-    st.write(st.session_state.history[-10:][::-1])
-else:
-    st.info("👈 請在左邊輸入數字開始分析")
+    # 歷史紀錄 (增加至 100 手)
+    st.write("### 📜 最近 100 手紀錄")
+    # 使用表格形式顯示，方便查看較長紀錄
+    history_df = pd.DataFrame({
+        "次序": range(len(st.session_state.history), len(st.session_state.history) - len(st.session_state.history[-100:]), -1),
+        "開出數字": st.session_state.history[-100:][::-1]
+    })
+    st.table(history_df)
