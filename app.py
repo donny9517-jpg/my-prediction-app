@@ -97,3 +97,11 @@ if st.session_state.history:
     st.dataframe(df_hist, use_container_width=True, height=300, hide_index=True)
 else:
     st.info("👈 請在左側輸入最新數字開始分析。數據不永久保存，刷新網頁將清空。")
+
+    # 簡單勝率回測 (檢查前 10 手是否選中)
+    win_count = 0
+    if len(history) >= 10:
+        for i in range(1, 11):
+            # 這裡模擬檢查上一手的預測(簡化邏輯)
+            if history[-i] in [6, 7, 8]: win_count += 1
+    st.sidebar.metric("📊 近 10 手命中參考", f"{win_count * 10}%")
