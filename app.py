@@ -10,23 +10,31 @@ st.title("📊 PRO 數據分析預測終端")
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# --- 側邊欄：輸入與警示 ---
+# --- 側邊欄：進階監控 ---
 with st.sidebar:
     st.header("⌨️ 數據輸入")
-    val = st.number_input("最新號碼", 2, 12, 7)
-    if st.button("提交並更新預測", use_container_width=True):
+    val = st.number_input("最新開出號碼", 2, 12, 7)
+    if st.button("提交數字並更新"):
         st.session_state.history.append(val)
     
     st.divider()
     
     if len(st.session_state.history) >= 10:
-        win_c = sum(1 for x in st.session_state.history[-10:] if x in [6, 7, 8])
-        win_rate = win_c * 10
-        st.write(f"📈 中軸命中率: **{win_rate}%**")
-        if win_rate <= 30:
-            st.error(f"⚠️ 預警：命中率低於30%！")
+        # A. 命中率
+        last_10 = st.session_state.history[-10:]
+        win_c = sum(1 for x in last_10 if x in [6, 7, 8])
+        st.metric("📈 中軸命中率", f"{win_c * 10}%")
+        
+        # B. 偏離度監控 (新增功能)
+        avg_val = sum(last_10) / 10
+        bias = abs(avg_val - 7)
+        if bias > 1.5:
+            st.warning(f"⚠️ 偏離警戒：目前重心偏向 {'大' if avg_val > 7 else '小'}號區")
+            
+        if (win_c * 10) <= 30:
+            st.error("🚨 警告：命中率極低，請暫停觀望")
     
-    if st.button("🗑️ 清空數據", use_container_width=True):
+    if st.button("🗑️ 清空所有數據"):
         st.session_state.history = []
         st.rerun()
 
