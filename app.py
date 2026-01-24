@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # 1. 網頁基礎設定
-st.set_page_config(page_title="PRO 數據終端", layout="centered")
+st.set_page_config(page_title="PRO 數據分析預測終端", layout="centered")
 
 st.title("📊 PRO 數據分析預測終端")
 
@@ -38,30 +38,41 @@ def analyze_data(history):
     for e in range(2, 13):
         prob_map = {7:6, 6:5, 8:5, 5:4, 9:4, 4:3, 10:3, 3:2, 11:2, 2:1, 12:1}
         score = (prob_map[e] / 36) * 100
+        
+        # 矩陣加成 (9 號強化版)
         if last in [6,7,8] and e in [6,7,8]: score += 18
-        if last in [4,8,10] and e in [4,8,10]: score += 14
+        if last in [8,9,10] and e in [8,9,10]: score += 15
+        if last in [5,7,9] and e in [5,7,9]: score += 12
+        
+        # 鄰居與過熱修正
         if abs(last - e) == 1: score += 10
-        if history[-10:].count(e) >= 3: score -= 22 # 負分來源：過熱懲罰
+        if history[-10:].count(e) >= 3: score -= 22 
+        
         results.append({"數字": e, "評分": round(score, 2)})
     return pd.DataFrame(results).sort_values("評分", ascending=False)
 
-# --- 主畫面：置頂預測區 ---
+# --- 主畫面顯示 ---
 if st.session_state.history:
     df_res = analyze_data(st.session_state.history)
     
-    # 🏆 置頂：Top 3 熱門預測卡片
+    # 🏆 置頂：熱門預測
     top_3 = df_res.head(3)
     top_3_list = top_3['數字'].astype(int).tolist()
     
-    st.subheader("🏆 熱門預測 Top 3 (置頂)")
+    st.subheader("🏆 熱門推薦 (置頂)")
     c1, c2, c3 = st.columns(3)
     c1.metric("第一首選", top_3_list[0])
     c2.metric("第二輔助", top_3_list[1])
     c3.metric("第三防守", top_3_list[2])
     
+    # ❄️ 新增：冷門預警 (評分最低的兩個號碼)
+    bottom_2 = df_res.tail(2)
+    bottom_list = bottom_2['數字'].astype(int).tolist()
+    st.markdown(f"**❄️ 冷門/避雷提醒：** `{bottom_list[0]}` , `{bottom_list[1]}` (評分最低)")
+    
     st.divider()
     
-    # 注碼建議
+    # 注碼與盤勢
     conf_score = df_res.iloc[0]['評分']
     if conf_score > 65:
         st.error("💰 注碼建議：💥 強烈重注")
@@ -70,14 +81,11 @@ if st.session_state.history:
     else:
         st.info("💰 注碼建議：🛡️ 試探輕注")
         
-    # 目前盤勢
     trend_text = "🔗 中軸連動" if st.session_state.history[-1] in [6,7,8] else "🌀 震盪盤"
     st.warning(f"📈 目前盤勢：{trend_text}")
 
-    # 能量分佈圖
     st.bar_chart(df_res.set_index("數字")["評分"])
     
-    # 100手紀錄
     with st.expander("📜 查看最近 100 手紀錄"):
         hist_data = st.session_state.history[-100:][::-1]
         st.write(hist_data)
