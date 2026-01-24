@@ -30,56 +30,24 @@ with st.sidebar:
         st.session_state.history = []
         st.rerun()
 
-# --- 核心運算邏輯 ---
+# --- 核心運算邏輯 (已優化 9 號權重) ---
 def analyze_data(history):
     if not history: return None
     last = history[-1]
     results = []
     for e in range(2, 13):
+        # A. 物理基礎分
         prob_map = {7:6, 6:5, 8:5, 5:4, 9:4, 4:3, 10:3, 3:2, 11:2, 2:1, 12:1}
         score = (prob_map[e] / 36) * 100
-        if last in [6,7,8] and e in [6,7,8]: score += 18
-        if last in [4,8,10] and e in [4,8,10]: score += 14
-        if abs(last - e) == 1: score += 10
-        if history[-10:].count(e) >= 3: score -= 22 # 負分來源：過熱懲罰
-        results.append({"數字": e, "評分": round(score, 2)})
-    return pd.DataFrame(results).sort_values("評分", ascending=False)
-
-# --- 主畫面：置頂預測區 ---
-if st.session_state.history:
-    df_res = analyze_data(st.session_state.history)
-    
-    # 🏆 置頂：Top 3 熱門預測卡片
-    top_3 = df_res.head(3)
-    top_3_list = top_3['數字'].astype(int).tolist()
-    
-    st.subheader("🏆 熱門預測 Top 3 (置頂)")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("第一首選", top_3_list[0])
-    c2.metric("第二輔助", top_3_list[1])
-    c3.metric("第三防守", top_3_list[2])
-    
-    st.divider()
-    
-    # 注碼建議
-    conf_score = df_res.iloc[0]['評分']
-    if conf_score > 65:
-        st.error("💰 注碼建議：💥 強烈重注")
-    elif conf_score > 55:
-        st.success("💰 注碼建議：🏹 穩健布局")
-    else:
-        st.info("💰 注碼建議：🛡️ 試探輕注")
         
-    # 目前盤勢
-    trend_text = "🔗 中軸連動" if st.session_state.history[-1] in [6,7,8] else "🌀 震盪盤"
-    st.warning(f"📈 目前盤勢：{trend_text}")
-
-    # 能量分佈圖
-    st.bar_chart(df_res.set_index("數字")["評分"])
-    
-    # 100手紀錄
-    with st.expander("📜 查看最近 100 手紀錄"):
-        hist_data = st.session_state.history[-100:][::-1]
-        st.write(hist_data)
-else:
-    st.info("👈 請展開左側選單輸入數據開始預測")
+        # B. 矩陣連動加成 (9 號強化版)
+        # 矩陣 1: 中軸核心 [6, 7, 8]
+        if last in [6,7,8] and e in [6,7,8]: score += 18
+        
+        # 矩陣 2: 大數/偶數擴展圈 [8, 9, 10, 11] - 讓 9 號跟隨大數加分
+        if last in [8,9,10,11] and e in [8,9,10,11]: score += 15
+        
+        # 矩陣 3: 奇數跳位圈 [5, 7, 9, 11] - 讓 9 號跟隨奇數加分
+        if last in [5,7,9,11] and e in [5,7,9,11]: score += 12
+        
+        # C
