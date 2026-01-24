@@ -1,17 +1,16 @@
 import streamlit as st
 import pandas as pd
 
-# 1. 網頁基礎設定 (centered 模式對手機最友善)
+# 1. 網頁基礎設定
 st.set_page_config(page_title="PRO 數據分析", layout="centered")
 
-# 簡單直接的 CSS，確保文字一定睇到
+# 強制顯示修正：確保手機文字清晰
 st.markdown("""
     <style>
-    .reportview-container .main .block-container { padding-top: 1rem; }
+    h1, h2, h3, p, span, label { color: #1f1f1f !important; }
+    .stMetric { background-color: #f8f9fb !important; padding: 15px; border-radius: 12px; border: 1px solid #eaedf2; }
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
-    /* 強化手機版按鈕高度 */
-    .stButton>button { height: 3em; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -25,30 +24,40 @@ if 'history' not in st.session_state:
 with st.sidebar:
     st.header("⌨️ 數據輸入")
     val = st.number_input("最新號碼", 2, 12, 7)
-    if st.button("提交數字", use_container_width=True):
+    if st.button("提交數字並更新預測", use_container_width=True):
         st.session_state.history.append(val)
     
     st.divider()
     
     if len(st.session_state.history) >= 10:
         win_c = sum(1 for x in st.session_state.history[-10:] if x in [6, 7, 8])
-        st.write(f"📈 中軸命中率: **{win_c * 10}%**")
-        if (win_c * 10) <= 30:
-            st.error("⚠️ 預警：命中率極低！")
+        win_rate = win_c * 10
+        st.write(f"📈 中軸命中率: **{win_rate}%**")
+        if win_rate <= 30:
+            st.error("⚠️ 預警：命中率低於30%！")
     
-    if st.button("🗑️ 清空數據", use_container_width=True):
+    if st.button("🗑️ 清空所有數據", use_container_width=True):
         st.session_state.history = []
         st.rerun()
 
-# --- 核心邏輯 ---
+# --- 核心邏輯 (回復原始設定) ---
 def analyze_data(history):
     if not history: return None
     last = history[-1]
     results = []
     for e in range(2, 13):
+        # 物理基礎分
         prob_map = {7:6, 6:5, 8:5, 5:4, 9:4, 4:3, 10:3, 3:2, 11:2, 2:1, 12:1}
         score = (prob_map[e] / 36) * 100
+        # 原始連動
         if last in [6,7,8] and e in [6,7,8]: score += 18
         if last in [4,8,10] and e in [4,8,10]: score += 14
+        # 鄰居與過熱修正
         if abs(last - e) == 1: score += 10
-        if history[-10:].count(e) >=
+        if history[-10:].count(e) >= 3: score -= 22 
+        results.append({"數字": e, "評分": round(score, 2)})
+    return pd.DataFrame(results)
+
+# --- 主畫面顯示 ---
+if st.session_state.history:
+    df_
