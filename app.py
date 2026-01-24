@@ -1,9 +1,18 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 
-# 1. 網頁基礎設定
-st.set_page_config(page_title="PRO 數據分析終端", layout="centered")
+# 1. 網頁基礎設定 (針對手機螢幕優化)
+st.set_page_config(page_title="PRO 數據預測", layout="centered")
+
+# 強制修正顯示問題，確保手機版一定睇到字
+st.markdown("""
+    <style>
+    h1, h2, h3, p, span { color: #1f1f1f !important; }
+    .stMetric { background-color: #f0f2f6 !important; padding: 10px; border-radius: 10px; border: 1px solid #d1d5db; }
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    </style>
+    """, unsafe_allow_html=True)
 
 st.title("📊 PRO 數據分析預測終端")
 
@@ -24,7 +33,7 @@ with st.sidebar:
         win_rate = win_c * 10
         st.write(f"📈 中軸命中率: **{win_rate}%**")
         if win_rate <= 30:
-            st.error(f"⚠️ 預警：命中率低於30%！")
+            st.error("⚠️ 預警：命中率低於30%！")
     
     if st.button("🗑️ 清空數據", use_container_width=True):
         st.session_state.history = []
@@ -38,46 +47,42 @@ def analyze_data(history):
     for e in range(2, 13):
         prob_map = {7:6, 6:5, 8:5, 5:4, 9:4, 4:3, 10:3, 3:2, 11:2, 2:1, 12:1}
         score = (prob_map[e] / 36) * 100
+        # 矩陣連動優化 (包含 9 號)
         if last in [6,7,8] and e in [6,7,8]: score += 18
-        if last in [8,9,10] and e in [8,9,10]: score += 15
-        if last in [5,7,9] and e in [5,7,9]: score += 12
+        if last in [8,9,10,11] and e in [8,9,10,11]: score += 15
+        if last in [5,7,9,11] and e in [5,7,9,11]: score += 12
         if abs(last - e) == 1: score += 10
         if history[-10:].count(e) >= 3: score -= 22 
-        results.append({"數字": e, "評分": score})
+        results.append({"數字": e, "評分": round(score, 2)})
     return pd.DataFrame(results).sort_values("數字")
 
 # --- 主畫面顯示 ---
 if st.session_state.history:
     df_res = analyze_data(st.session_state.history)
     
-    # 🏆 熱門推薦
-    top_3 = df_res.sort_values("評分", ascending=False).head(3)
-    top_3_list = top_3['數字'].astype(int).tolist()
+    # 🏆 置頂：Top 3 熱門推薦 (視覺強化)
+    top_df = df_res.sort_values("評分", ascending=False).head(3)
+    top_3_list = top_df['數字'].astype(int).tolist()
     
-    st.subheader("🏆 熱門推薦")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("第一首選", top_3_list[0])
-    c2.metric("第二輔助", top_3_list[1])
-    c3.metric("第三防守", top_3_list[2])
+    st.subheader("🔥 置頂核心預測")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.success(f"**首選: {top_3_list[0]}**")
+    with col2:
+        st.info(f"**次選: {top_3_list[1]}**")
+    with col3:
+        st.warning(f"**防守: {top_3_list[2]}**")
     
-    # ❄️ 冷門提醒
-    bottom_2 = df_res.sort_values("評分").head(2)
-    st.markdown(f"**❄️ 冷門避雷：** `{bottom_2['數字'].iloc[0]}`, `{bottom_2['數字'].iloc[1]}`")
+    # ❄️ 冷門避雷
+    bottom_nums = df_res.sort_values("評分").head(2)['數字'].tolist()
+    st.markdown(f"**❄️ 冷門/避雷提醒：** `{int(bottom_nums[0])}` , `{int(bottom_nums[1])}`")
     st.divider()
 
-    # 📊 升級版彩色 Plotly 圖表
-    # 定義顏色：高分為紅，低分為灰藍
-    fig = px.bar(df_res, x='數字', y='評分', 
-                 color='評分', 
-                 color_continuous_scale=['#455a64', '#ffd54f', '#ff5252'], # 灰 -> 黃 -> 紅
-                 range_color=[-10, 45],
-                 text_auto='.1f')
-    
-    fig.update_layout(xaxis=dict(tickmode='linear'), coloraxis_showscale=False, height=400)
-    st.plotly_chart(fig, use_container_width=True)
+    # 📊 能量分布圖 (內置穩定版)
+    st.bar_chart(df_res.set_index("數字")["評分"])
 
-    # 注碼與盤勢
-    best_score = top_3['評分'].iloc[0]
+    # 注碼建議
+    best_score = top_df.iloc[0]['評分']
     if best_score > 65: st.error("💰 注碼建議：💥 強烈重注")
     elif best_score > 55: st.success("💰 注碼建議：🏹 穩健布局")
     else: st.info("💰 注碼建議：🛡️ 試探輕注")
@@ -85,4 +90,3 @@ if st.session_state.history:
     with st.expander("📜 查看 100 手紀錄"):
         st.write(st.session_state.history[-100:][::-1])
 else:
-    st.info("👈 請輸入數據開始預測")
