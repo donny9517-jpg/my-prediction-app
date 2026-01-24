@@ -58,6 +58,10 @@ if st.session_state.history:
     c1.metric("第一首選", top_3_list[0])
     c2.metric("第二輔助", top_3_list[1])
     c3.metric("第三防守", top_3_list[2])
+
+    # ❄️ 冷門避雷
+    bot_2 = df_res.tail(2)['數字'].astype(int).tolist()
+    st.markdown(f"**❄️ 冷門避雷：** `{bot_2[0]}` , `{bot_2[1]}`")
     
     st.divider()
     
