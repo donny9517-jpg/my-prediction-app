@@ -78,8 +78,9 @@ if st.session_state.history:
     trend_text = "🔗 中軸連動" if st.session_state.history[-1] in [6,7,8] else "🌀 震盪盤"
     st.warning(f"📈 目前盤勢：{trend_text}")
 
-    # 能量分佈圖
-    st.bar_chart(df_res.set_index("數字")["評分"])
+    # 能量分布圖
+    st.write("📊 **能量分布圖**")
+    st.bar_chart(df_raw.sort_values("數字").set_index("數字")["評分"])
     
     # 100手紀錄
     with st.expander("📜 查看最近 100 手紀錄"):
