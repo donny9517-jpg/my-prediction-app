@@ -82,9 +82,8 @@ if st.session_state.history:
     st.write("📊 **能量分布圖**")
     st.bar_chart(df_raw.sort_values("數字").set_index("數字")["評分"])
     
-    # 100手紀錄
-    with st.expander("📜 查看最近 100 手紀錄"):
-        hist_data = st.session_state.history[-100:][::-1]
+    with st.expander("📜 最近 100 手紀錄"):
+        st.write(st.session_state.history[-100:][::-1])
         st.write(hist_data)
 else:
     st.info("👈 請展開左側選單輸入數據開始預測")
