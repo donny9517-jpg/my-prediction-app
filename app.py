@@ -53,7 +53,7 @@ if st.session_state.history:
     top_3 = df_res.head(3)
     top_3_list = top_3['數字'].astype(int).tolist()
     
-    st.subheader("🏆 熱門預測 Top 3 (置頂)")
+    st.subheader("🏆 熱門預測 Top 3")
     c1, c2, c3 = st.columns(3)
     c1.metric("第一首選", top_3_list[0])
     c2.metric("第二輔助", top_3_list[1])
