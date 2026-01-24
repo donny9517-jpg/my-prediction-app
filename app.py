@@ -56,7 +56,7 @@ if st.session_state.history:
     st.subheader("🏆 熱門預測 Top 3")
     c1, c2, c3 = st.columns(3)
     c1.metric("第一首選", top_3_list[0])
-    c2.metric("第二輔助", top_3_list[1])
+    c2.metric("第二次選", top_3_list[1])
     c3.metric("第三防守", top_3_list[2])
 
     # ❄️ 冷門避雷
