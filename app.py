@@ -55,6 +55,12 @@ def analyze_data(history):
 
 # --- 主畫面：置頂預測區 ---
 if st.session_state.history:
+    # ✨ 新增：36 手週期提醒邏輯
+    current_count = len(st.session_state.history)
+    if current_count > 0 and current_count % 36 == 0:
+        st.info(f"💡 **週期提醒**：已記錄 {current_count} 手數據（1 個完整週期）。建議點擊左側「清空數據」以保持預測靈敏度。")
+        
+if st.session_state.history:
     df_res = analyze_data(st.session_state.history)
     
     # 🏆 置頂：Top 3 熱門預測卡片
