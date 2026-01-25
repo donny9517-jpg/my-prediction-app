@@ -31,10 +31,10 @@ with st.sidebar:
     total_h = len(st.session_state.history)
     st.write(f"🔢 當前總手數：**{total_h}**")
     
-    if total_h >= 10:
+    if total_h >= 100:
         last_10 = st.session_state.history[-10:]
         win_c = sum(1 for x in last_10 if x in [6, 7, 8])
-        st.metric("📈 中軸命中率", f"{win_c * 10}%")
+        st.metric("📈 中軸命中率", f"{win_c * 100}%")
         
         avg_val = sum(last_10) / 10
         if abs(avg_val - 7) > 1.5:
