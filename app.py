@@ -37,7 +37,7 @@ with st.sidebar:
         win_c = sum(1 for x in all_data if x in [6, 7, 8])
         cumulative_win_rate = (win_c / total_h) * 100
         
-        st.metric("📈 累積中軸命中率", f"{cumulative_win_rate:.1f}%")
+        st.metric("📈 累積命中率", f"{cumulative_win_rate:.1f}%")
         
         # 偏離度依然觀察最近 10 手，因為呢個係睇短期變盤
         if total_h >= 10:
