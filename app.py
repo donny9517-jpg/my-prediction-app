@@ -34,7 +34,7 @@ with st.sidebar:
     if total_h >= 100:
         last_10 = st.session_state.history[-10:]
         win_c = sum(1 for x in last_10 if x in [6, 7, 8])
-        st.metric("📈 中軸命中率", f"{win_c * 100}%")
+        st.metric("📈 中軸命中率", f"{win_c * 10}%")
         
         avg_val = sum(last_10) / 10
         if abs(avg_val - 7) > 1.5:
