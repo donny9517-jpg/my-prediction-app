@@ -27,33 +27,24 @@ with st.sidebar:
     
     st.divider()
     
-    # 顯示總手數
-    total_hands = len(st.session_state.history)
-    st.write(f"🔢 當前總手數: **{total_hands}**")
-    
-    if total_hands >= 10:
+    if len(st.session_state.history) >= 10:
+        # A. 命中率
         last_10 = st.session_state.history[-10:]
         win_c = sum(1 for x in last_10 if x in [6, 7, 8])
-        st.metric("📈 中軸命中率 (近10手)", f"{win_c * 10}%")
+        st.metric("📈 中軸命中率", f"{win_c * 10}%")
+        
+        # B. 偏離度監控 (新增功能)
+        avg_val = sum(last_10) / 10
+        bias = abs(avg_val - 7)
+        if bias > 1.5:
+            st.warning(f"⚠️ 偏離警戒：目前重心偏向 {'大' if avg_val > 7 else '小'}號區")
+            
+        if (win_c * 10) <= 30:
+            st.error("🚨 警告：命中率極低，請暫停觀望")
     
     if st.button("🗑️ 立即清空數據"):
         st.session_state.history = []
         st.rerun()
-
-# --- 核心邏輯 (維持原始 9 號設定) ---
-def analyze_data(history):
-    if not history: return None
-    last = history[-1]
-    results = []
-    for e in range(2, 13):
-        prob_map = {7:6, 6:5, 8:5, 5:4, 9:4, 4:3, 10:3, 3:2, 11:2, 2:1, 12:1}
-        score = (prob_map[e] / 36) * 100
-        if last in [6,7,8] and e in [6,7,8]: score += 18
-        if last in [4,8,10] and e in [4,8,10]: score += 14
-        if abs(last - e) == 1: score += 10
-        if history[-10:].count(e) >= 3: score -= 22 
-        results.append({"數字": e, "評分": round(score, 2)})
-    return pd.DataFrame(results)
 
 # --- 主畫面佈局 ---
 if st.session_state.history:
