@@ -31,17 +31,24 @@ with st.sidebar:
     total_h = len(st.session_state.history)
     st.write(f"🔢 當前總手數：**{total_h}**")
     
-    if total_h >= 10:
-        last_100 = st.session_state.history[-10:]
-        win_c = sum(1 for x in last_100 if x in [6, 7, 8])
-        st.metric("📈 中軸命中率", f"{win_c * 10}%")
+    if total_h >= 1:
+        # ✨ 修改：計算累積命中率 (所有數據)
+        all_data = st.session_state.history
+        win_c = sum(1 for x in all_data if x in [6, 7, 8])
+        cumulative_win_rate = (win_c / total_h) * 100
         
-        avg_val = sum(last_10) / 10
-        if abs(avg_val - 7) > 1.5:
-            st.warning(f"⚠️ 偏離警戒：重心偏向 {'大' if avg_val > 7 else '小'}號")
-            
-        if (win_c * 10) <= 30:
-            st.error("🚨 警告：命中率極低！")
+        st.metric("📈 累積中軸命中率", f"{cumulative_win_rate:.1f}%")
+        
+        # 偏離度依然觀察最近 10 手，因為呢個係睇短期變盤
+        if total_h >= 10:
+            last_10 = all_data[-10:]
+            avg_val = sum(last_10) / 10
+            if abs(avg_val - 7) > 1.5:
+                st.warning(f"⚠️ 偏離警戒：短期重心偏向 {'大' if avg_val > 7 else '小'}號")
+        
+        # 累積警示
+        if total_h >= 10 and cumulative_win_rate <= 30:
+            st.error("🚨 警告：累積命中率極低，建議重新觀察規律！")
     
     if st.button("🗑️ 清空所有數據"):
         st.session_state.history = []
