@@ -27,20 +27,14 @@ with st.sidebar:
     
     st.divider()
     
-    if len(st.session_state.history) >= 10:
-        # A. 命中率
+    # 顯示總手數
+    total_hands = len(st.session_state.history)
+    st.write(f"🔢 當前總手數: **{total_hands}**")
+    
+    if total_hands >= 10:
         last_10 = st.session_state.history[-10:]
         win_c = sum(1 for x in last_10 if x in [6, 7, 8])
-        st.metric("📈 中軸命中率", f"{win_c * 10}%")
-        
-        # B. 偏離度監控 (新增功能)
-        avg_val = sum(last_10) / 10
-        bias = abs(avg_val - 7)
-        if bias > 1.5:
-            st.warning(f"⚠️ 偏離警戒：目前重心偏向 {'大' if avg_val > 7 else '小'}號區")
-            
-        if (win_c * 10) <= 30:
-            st.error("🚨 警告：命中率極低，請暫停觀望")
+        st.metric("📈 中軸命中率 (近10手)", f"{win_c * 10}%")
     
     if st.button("🗑️ 立即清空數據"):
         st.session_state.history = []
