@@ -3,25 +3,16 @@ import pandas as pd
 import numpy as np
 import random
 
-# 1. 網頁基礎設定
-st.set_page_config(page_title="PRO 數據預測終端", layout="centered")
-
-# 極簡 CSS，確保手機版文字清晰
-st.markdown("""
-    <style>
-    h1, h2, h3, p { color: #1f1f1f !important; }
-    .stMetric { background-color: #f8f9fb !important; padding: 10px; border-radius: 10px; }
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    </style>
-    """, unsafe_allow_html=True)
+# 1. 網頁基礎設定 (移除所有自定義 CSS 以防白畫面)
+st.set_page_config(page_title="PRO 數據分析", layout="centered")
 
 st.title("📊 PRO 專業數據分析終端")
 
+# 初始化數據
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# --- 側邊欄 ---
+# --- 側邊欄：功能管理 ---
 with st.sidebar:
     st.header("⌨️ 數據輸入")
     val = st.number_input("最新號碼", 2, 12, 7)
@@ -30,46 +21,42 @@ with st.sidebar:
     
     st.divider()
     
-    # 測試功能
+    # 一鍵模擬測試 (驗證 36手提醒)
     if st.button("🎲 模擬 36 手數據", use_container_width=True):
         sim = [random.randint(1,6) + random.randint(1,6) for _ in range(36)]
         st.session_state.history.extend(sim)
         st.rerun()
 
-    if st.button("🗑️ 清空所有數據", use_container_width=True):
+    if st.button("🗑️ 清空數據", use_container_width=True):
         st.session_state.history = []
         st.rerun()
 
-# --- 核心邏輯 ---
+# --- 核心運算邏輯 (整合所有預測因素) ---
 def analyze_data(history):
     if not history: return None
     last = history[-1]
     results = []
-    # 原始機率地圖
+    # 物理機率地圖
     prob_map = {7:6, 6:5, 8:5, 5:4, 9:4, 4:3, 10:3, 3:2, 11:2, 2:1, 12:1}
-    
-    # 全歷史頻率統計
-    counts = pd.Series(history).value_counts().reindex(range(2,13), fill_value=0)
     total_h = len(history)
-
+    
     for e in range(2, 13):
+        # 1. 基礎分 + 7號回歸補償
         score = (prob_map[e] / 36) * 100
-        
-        # 1. ✨ 7號強勢回歸補償
         if e == 7: score += 5
         
-        # 2. 原始矩陣與連動
+        # 2. 原始連動矩陣
         if last in [6,7,8] and e in [6,7,8]: score += 18
         if last in [4,8,10] and e in [4,8,10]: score += 14
         
-        # 3. 遺漏能量 (遺漏愈耐加分愈多)
+        # 3. 遺漏能量 (均值回歸)
         try:
             omit = history[::-1].index(e)
             score += min(omit * 0.5, 10)
         except ValueError:
             score += 10
 
-        # 4. 鄰里熱力區間 (✨新因素)
+        # 4. 最近熱力擴散 (最近5手)
         for h in history[-5:]:
             if abs(e - h) <= 1: score += 3
 
@@ -98,17 +85,27 @@ if st.session_state.history:
     c2.metric("次選", top_3[1])
     c3.metric("防守", top_3[2])
     
-    # 📉 統計指標：標準差與比例
+    # 📊 統計指標區
     st.divider()
     last_10 = st.session_state.history[-10:]
     std_v = np.std(last_10)
-    st.write(f"📊 波動指數 (STD): **{std_v:.2f}**")
     
-    # 趨勢條
-    big = sum(1 for x in st.session_state.history[-20:] if x > 7)
-    small = sum(1 for x in st.session_state.history[-20:] if x < 7)
-    st.progress(big / (big + small + 0.1), text=f"大號 {big} vs 小號 {small} (最近20手)")
+    col_stat1, col_stat2 = st.columns(2)
+    with col_stat1:
+        st.write(f"波動指數(STD): **{std_v:.2f}**")
+        win_c = sum(1 for x in st.session_state.history if x in [6, 7, 8])
+        st.write(f"累積中軸命中: **{(win_c/curr_len)*100:.1f}%**")
+        
+    with col_stat2:
+        big = sum(1 for x in st.session_state.history[-20:] if x > 7)
+        small = sum(1 for x in st.session_state.history[-20:] if x < 7)
+        st.write(f"大號:{big} | 小號:{small}")
 
+    # 預測能量圖
     st.bar_chart(df_raw.sort_values("數字").set_index("數字")["評分"])
+    
+    # 歷史紀錄
+    with st.expander("📜 最近紀錄"):
+        st.write(st.session_state.history[-100:][::-1])
 else:
-    st.info("👋 歡迎！請點擊側邊欄 [ > ] 輸入數字。")
+    st.info("👋 歡迎！請點擊側邊欄 [ > ] 輸入數字開始。")
