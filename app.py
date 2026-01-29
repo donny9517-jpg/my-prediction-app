@@ -10,13 +10,13 @@ st.title("📊 PRO 專業數據終端 (對子強化版)")
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# --- 🔍 自動修正舊數據格式 (修復截圖中的 TypeError) ---
+# --- 🔍 自動修正舊數據格式 (防止 TypeError) ---
 clean_history = []
 for item in st.session_state.history:
     if isinstance(item, tuple):
         clean_history.append(item)
     else:
-        # 將舊的純數字轉換為 (數字, False)
+        # 將舊的純數字紀錄自動轉換成新格式
         clean_history.append((item, False))
 st.session_state.history = clean_history
 
@@ -55,4 +55,4 @@ def analyze_data(history):
         
         # 矩陣連動
         if last_val in [6,7,8] and e in [6,7,8]: score += 18
-        if last_val in [4,8,10] and e in [4,8,10]:
+        if last_val in [4,8,10] and e in [4,8,10]: score +=
