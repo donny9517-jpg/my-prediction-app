@@ -62,4 +62,26 @@ def analyze_data(history):
 
 # --- 主畫面顯示 ---
 if st.session_state.history:
-    df_raw, current_risk = analyze_data
+    df_raw, current_risk = analyze_data(st.session_state.history)
+    df_res = df_raw.sort_values("評分", ascending=False)
+    
+    # 🏆 深度推薦與凱利注碼
+    top_row = df_res.iloc[0]
+    best_num = int(top_row['數字'])
+    best_score = top_row['評分']
+    
+    st.subheader(f"🏆 最佳推薦：【{best_num}】")
+
+    # 💰 凱利公式 (計算建議注碼)
+    p_val = 0.35 + (best_score / 100) * 0.25
+    k_f = (1.0 * p_val - (1 - p_val)) / 1.0
+    suggested_bet = bankroll * max(0, k_f) * risk_adj
+    st.metric("💰 建議注碼 (凱利公式)", f"${int(suggested_bet)}")
+
+    # --- ✨ 奇偶趨勢偵測 ---
+    st.divider()
+    st.subheader("🕵️ 奇偶趨勢偵測")
+    last_6 = st.session_state.history[-6:]
+    odds_c = sum(1 for x in last_6 if x % 2 != 0)
+    evens_c = len(last_6) - odds_c
+    st.write(f"最近 6 手分佈：**{odds_c} 單 | {evens_c} 雙**")
