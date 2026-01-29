@@ -2,28 +2,37 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-# 1. 網頁設定
-st.set_page_config(page_title="PRO 數據分析 & 凱利計算器", layout="centered")
+# 1. 網頁基礎設定
+st.set_page_config(page_title="PRO 數據分析", layout="centered")
 
-st.title("📊 PRO 數據終端 & 凱利注碼器")
+st.title("📊 PRO 專業數據終端 (全能版)")
 
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# --- 側邊欄 ---
+# --- 側邊欄：進階監控 ---
 with st.sidebar:
     st.header("⌨️ 數據輸入")
     val = st.number_input("最新號碼", 2, 12, 7)
-    if st.button("提交數字", use_container_width=True):
+    if st.button("提交數字並更新預測", use_container_width=True):
         st.session_state.history.append(val)
     
     st.divider()
     
-    # 💰 凱利計算器設定
-    st.header("💰 資金管理設定")
-    bankroll = st.number_input("當前總本金", min_value=100, value=10000, step=100)
-    odds = st.number_input("賠率 (1 賠 X)", min_value=0.1, value=1.0, step=0.1)
-    risk_level_input = st.slider("凱利激進度 (1=全凱利, 0.5=半凱利)", 0.1, 1.0, 0.5)
+    total_h = len(st.session_state.history)
+    if total_h >= 1:
+        # 累積命中率 (計算全歷史 6,7,8)
+        win_c = sum(1 for x in st.session_state.history if x in [6, 7, 8])
+        st.metric("📈 累積中軸命中率", f"{(win_c/total_h)*100:.1f}%")
+        
+        if total_h >= 5:
+            std_recent = np.std(st.session_state.history[-5:])
+            st.write(f"近期波動 (STD): **{std_recent:.2f}**")
+
+    # 💰 凱利資金設定
+    st.header("💰 資金管理")
+    bankroll = st.number_input("本金", value=1000)
+    risk_adj = st.slider("激進度", 0.1, 1.0, 0.5)
 
     if st.button("🗑️ 清空數據", use_container_width=True):
         st.session_state.history = []
@@ -36,11 +45,10 @@ def analyze_data(history):
     results = []
     prob_map = {7:6, 6:5, 8:5, 5:4, 9:4, 4:3, 10:3, 3:2, 11:2, 2:1, 12:1}
     
-    # 盤勢風險鎖
+    # 風險安全鎖
     risk_level = 1.0
     if len(history) >= 5:
-        std_recent = np.std(history[-5:])
-        if std_recent > 2.5: risk_level = 0.6
+        if np.std(history[-5:]) > 2.5: risk_level = 0.6
     
     for e in range(2, 13):
         score = (prob_map[e] / 36) * 100
@@ -57,10 +65,19 @@ def analyze_data(history):
         
         final_score = score * risk_level
         results.append({"數字": e, "評分": round(final_score, 2)})
-        
     return pd.DataFrame(results), risk_level
 
 # --- 主畫面顯示 ---
 if st.session_state.history:
     df_raw, current_risk = analyze_data(st.session_state.history)
-    df_res = df_raw.sort_values("評分",
+    df_res = df_raw.sort_values("評分", ascending=False)
+    
+    # 🏆 深度推薦與凱利
+    top_n = df_res.iloc[0]
+    best_num = int(top_n['數字'])
+    best_score = top_n['評分']
+    
+    st.subheader(f"🏆 最佳推薦：【{best_num}】 (評分: {best_score})")
+
+    # 💰 凱利計算 (假設 1 賠 1)
+    p = 0.35 + (best_score / 100) *
