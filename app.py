@@ -53,4 +53,22 @@ def analyze_data(history):
     
     # 風險鎖
     risk_level = 1.0
-    if len(h_vals) >=
+    if len(h_vals) >= 5:
+        if np.std(h_vals[-5:]) > 2.5: risk_level = 0.6
+    
+    for e in range(2, 13):
+        score = (prob_map[e] / 36) * 100
+        if e == 7: score += 5
+        
+        # 矩陣連動
+        if last_val in [6,7,8] and e in [6,7,8]: score += 18
+        if last_val in [4,8,10] and e in [4,8,10]: score += 14
+        
+        # ✨ 對子偏移加分
+        if last_is_double:
+            if e in [2, 3, 11, 12]: score += 12
+            if e == last_val: score += 15
+        
+        # 遺漏與熱度
+        try:
+            omit = h
