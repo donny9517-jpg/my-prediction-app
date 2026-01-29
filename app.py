@@ -24,7 +24,7 @@ with st.sidebar:
         st.metric("📈 累積中軸命中率", f"{(win_c/total_h)*100:.1f}%")
         
     st.header("💰 資金管理")
-    bankroll = st.number_input("本金", value=1000)
+    bankroll = st.number_input("本本金", value=1000)
     risk_adj = st.slider("激進度 (0.5=建議)", 0.1, 1.0, 0.5)
 
     if st.button("🗑️ 清空數據", use_container_width=True):
@@ -64,7 +64,7 @@ if st.session_state.history:
     df_raw, current_risk = analyze_data(st.session_state.history)
     df_res = df_raw.sort_values("評分", ascending=False)
     
-    # 🏆 恢復 Top 3 推薦顯示
+    # 🏆 Top 3 推薦
     top_list = df_res.head(3)['數字'].astype(int).tolist()
     st.subheader("🏆 深度預測推薦")
     c1, c2, c3 = st.columns(3)
@@ -72,25 +72,31 @@ if st.session_state.history:
     c2.metric("第二輔助", top_list[1])
     c3.metric("第三防守", top_list[2])
 
-    # 💰 凱利注碼 (基於第一首選)
+    # 💰 凱利注碼
     best_score = df_res.iloc[0]['評分']
     p_val = 0.35 + (best_score / 100) * 0.25
     k_f = (1.0 * p_val - (1 - p_val)) / 1.0
     suggested_bet = bankroll * max(0, k_f) * risk_adj
-    
-    st.divider()
-    st.metric("💰 建議注碼 (凱利公式)", f"${int(suggested_bet)}")
-    if current_risk < 1.0:
-        st.error("🚨 警告：盤勢混亂，注碼已自動調低。")
+    st.metric("💰 建議注碼", f"${int(suggested_bet)}")
 
-    # 🕵️ 奇偶監控
+    # 📊 實時能量分布圖
     st.divider()
-    st.subheader("🕵️ 奇偶趨勢監控")
-    last_6 = st.session_state.history[-6:]
-    odds_c = sum(1 for x in last_6 if x % 2 != 0)
-    evens_c = len(last_6) - odds_c
-    st.write(f"最近 6 手分佈：**{odds_c} 單 | {evens_c} 雙**")
-    
-    if len(last_6) >= 4:
-        if all(x % 2 != 0 for x in last_6[-4:]): st.warning("🔥 偵測到「單數長龍」")
-        elif all(x % 2 == 0 for x in last_6[-4:]): st.info("🌊 偵測到「雙數長龍」")
+    st.subheader("📊 實時能量分布評分")
+    st.bar_chart(df_raw.sort_values("數字").set_index("數字")["評分"])
+
+    # 🕵️ 盤勢一致性檢查
+    last_5 = st.session_state.history[-5:]
+    if len(last_5) >= 3:
+        consistency = np.std(last_5)
+        if consistency < 1.6:
+            st.success("✅ 目前盤勢穩定，預測參考價值高")
+        else:
+            st.warning("⚠️ 數據跳動劇烈，請減碼觀望")
+
+    # 📜 累積歷史記錄
+    st.divider()
+    with st.expander("📜 查看累積歷史記錄 (最近 100 手)"):
+        # 顯示為橫向列表方便手機閱讀
+        st.write(st.session_state.history[-100:][::-1])
+else:
+    st.info("👋 歡迎！請輸入數據開始分析。")
