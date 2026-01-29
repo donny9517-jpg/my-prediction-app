@@ -24,7 +24,7 @@ with st.sidebar:
         st.metric("📈 累積中軸命中率", f"{(win_c/total_h)*100:.1f}%")
         
     st.header("💰 資金管理")
-    bankroll = st.number_input("本本金", value=1000)
+    bankroll = st.number_input("本金", value=1000)
     risk_adj = st.slider("激進度 (0.5=建議)", 0.1, 1.0, 0.5)
 
     if st.button("🗑️ 清空數據", use_container_width=True):
