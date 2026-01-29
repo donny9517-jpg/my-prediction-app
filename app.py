@@ -32,13 +32,13 @@ with st.sidebar:
     # 💰 凱利資金設定
     st.header("💰 資金管理")
     bankroll = st.number_input("本金", value=1000)
-    risk_adj = st.slider("激進度", 0.1, 1.0, 0.5)
+    risk_adj = st.slider("激進度 (0.5=建議)", 0.1, 1.0, 0.5)
 
     if st.button("🗑️ 清空數據", use_container_width=True):
         st.session_state.history = []
         st.rerun()
 
-# --- 核心邏輯 ---
+# --- 核心運算邏輯 ---
 def analyze_data(history):
     if not history: return None, 1.0
     last = history[-1]
@@ -73,11 +73,4 @@ if st.session_state.history:
     df_res = df_raw.sort_values("評分", ascending=False)
     
     # 🏆 深度推薦與凱利
-    top_n = df_res.iloc[0]
-    best_num = int(top_n['數字'])
-    best_score = top_n['評分']
-    
-    st.subheader(f"🏆 最佳推薦：【{best_num}】 (評分: {best_score})")
-
-    # 💰 凱利計算 (假設 1 賠 1)
-    p = 0.35 + (best_score / 100) *
+    top_n = df_res.
